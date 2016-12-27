@@ -60,6 +60,10 @@ public class EntityFieldMetaData {
 		return field.getName();
 	}
 	
+	public Field getReflectionField() {
+		return field;
+	}
+	
 	/**
 	 * get the value from given object using reflection on public getter method
 	 * @param entity - object instance the value will be retrieved from

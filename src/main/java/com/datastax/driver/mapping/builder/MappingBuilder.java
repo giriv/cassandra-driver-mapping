@@ -26,6 +26,9 @@ import com.datastax.driver.mapping.option.WriteOptions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
+import sun.reflect.generics.repository.FieldRepository;
+
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -55,7 +58,6 @@ public class MappingBuilder {
         PreparedStatement ps = null;
         try {
             ps = statementCache.get(getCacheKey(key, session), new Callable<PreparedStatement>() {
-                @Override
                 public PreparedStatement call() throws Exception {
                     return session.prepare(stmt);
                 }
@@ -292,7 +294,6 @@ public class MappingBuilder {
         PreparedStatement ps;
         try {
             ps = statementCache.get(getSelectCacheKey(table, session, fields), new Callable<PreparedStatement>() {
-                @Override
                 public PreparedStatement call() throws Exception {
                     Select stmt = buildSelectAll(table, pkCols, options, keyspace, fields);
                     return session.prepare(stmt);
@@ -393,6 +394,7 @@ public class MappingBuilder {
                 value = field.getCollectionType().newInstance();
             }
 
+            ParameterizedType type;
             Class<?> cls = field.getType();
             DataType.Name dataType = field.getDataType();
             switch (dataType) {
@@ -452,7 +454,11 @@ public class MappingBuilder {
                     if (value == null) {
                         value = new HashMap<Object, Object>();
                     }
-                    Map<Object, Object> data = row.getMap(field.getColumnName(), Object.class, Object.class);
+                    
+                    // GIRI - Made changes to pass ACTUAL class types of the MAPS key & value attributes
+                    field.getReflectionField().setAccessible(true);
+                    type = (ParameterizedType) field.getReflectionField().getGenericType();
+                    Map<Object, Object> data = (Map<Object, Object>) row.getMap(field.getColumnName(), Class.forName(type.getActualTypeArguments()[0].getTypeName()), Class.forName(type.getActualTypeArguments()[1].getTypeName()));
                     if (!data.isEmpty()) {
                         ((Map<Object, Object>) value).putAll(data);
                     }
@@ -461,7 +467,10 @@ public class MappingBuilder {
                     if (value == null) {
                         value = new ArrayList<Object>();
                     }
-                    List<Object> lst = row.getList(field.getColumnName(), Object.class);
+                    // GIRI - Made changes to pass ACTUAL class types of the MAPS key & value attributes
+                    field.getReflectionField().setAccessible(true);
+                    type = (ParameterizedType) field.getReflectionField().getGenericType();
+                    List<Object> lst = (List<Object>) row.getList(field.getColumnName(), Class.forName(type.getActualTypeArguments()[0].getTypeName()));
                     if (!lst.isEmpty()) {
                         ((List<Object>) value).addAll(lst);
                     }
@@ -470,7 +479,10 @@ public class MappingBuilder {
                     if (value == null) {
                         value = new HashSet<Object>();
                     }
-                    Set<Object> set = row.getSet(field.getColumnName(), Object.class);
+                    // GIRI - Made changes to pass ACTUAL class types of the MAPS key & value attributes
+                    field.getReflectionField().setAccessible(true);
+                    type = (ParameterizedType) field.getReflectionField().getGenericType();
+                    Set<Object> set = (Set<Object>) row.getSet(field.getColumnName(), Class.forName(type.getActualTypeArguments()[0].getTypeName()));
                     if (!set.isEmpty()) {
                         ((Set<Object>) value).addAll(set);
                     }

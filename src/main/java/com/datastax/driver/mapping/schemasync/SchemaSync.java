@@ -169,10 +169,12 @@ public final class SchemaSync {
     	
     	boolean doNotAddCols  = false;
     	boolean doDropCols  = true;
+    	boolean doNotDropCustomIndex = true;
     	if (syncOptions != null ) {
     		List<SyncOptionTypes> opts = syncOptions.getOptions(entityMetadata.getEntityClass());
     		doNotAddCols  = opts.contains(SyncOptionTypes.DoNotAddColumns);
     		doDropCols  = !opts.contains(SyncOptionTypes.DoNotDropColumns);
+    		doNotDropCustomIndex  = opts.contains(SyncOptionTypes.DoNotDropCustomIndex);
     	}
     	List<RegularStatement> statements = new ArrayList<RegularStatement>();
     	
